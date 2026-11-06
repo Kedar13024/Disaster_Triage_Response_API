@@ -1,8 +1,6 @@
 from datetime import datetime
 from fastapi import Depends, FastAPI, HTTPException, Response, status
 from pydantic import BaseModel, ConfigDict
-
-
 from backend.models import models
 from backend.database.database import engine, get_db , Session
 
@@ -24,8 +22,12 @@ class IncidentCreate(IncidentBase):
     """Fields needed to report  an incident."""
 
 
-class IncidentUpdate(IncidentBase):
+class IncidentUpdate(BaseModel):
     """Fields needed to update an incident."""
+    incident_type: str | None
+    description: str | None
+    severity : str | None
+    published : bool | None
 
 class IncidentResponse(IncidentBase):
     """Serialize an incident"""
@@ -69,7 +71,7 @@ def create_incident(incident: IncidentCreate , db : Session = Depends(get_db)):
     return new_incident
 
 
-@app.put("/incidents/{incident_id}", response_model=IncidentResponse, tags=["Incidents"])
+@app.patch("/incidents/{incident_id}", response_model=IncidentResponse, tags=["Incidents"])
 def update_incident(incident_id: int, incident: IncidentUpdate , db : Session = Depends(get_db)):
     """Replace the details of an existing incident."""
     matched_incident_query = db.query(models.Incident).filter(models.Incident.incident_id == incident_id)
@@ -81,6 +83,7 @@ def update_incident(incident_id: int, incident: IncidentUpdate , db : Session = 
     db.commit()
     db.refresh(old_incident)
     return old_incident
+
 
 
 @app.delete(
