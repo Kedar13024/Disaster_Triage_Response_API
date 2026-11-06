@@ -1,41 +1,13 @@
-from datetime import datetime
 from fastapi import Depends, FastAPI, HTTPException, Response, status
-from pydantic import BaseModel, ConfigDict
 from backend.models import models
 from backend.database.database import engine, get_db , Session
+from backend.schemas.incident_sch import IncidentCreate , IncidentResponse , IncidentUpdate
 
 app = FastAPI(title="Disaster Triage Response API")
 
 
 models.Base.metadata.create_all(bind=engine)
 
-class IncidentBase(BaseModel):
-    """An incident returned by the API."""
-
-    incident_type: str
-    description: str
-    severity : str
-    published : bool
-
-
-class IncidentCreate(IncidentBase):
-    """Fields needed to report  an incident."""
-
-
-class IncidentUpdate(BaseModel):
-    """Fields needed to update an incident."""
-    incident_type: str | None
-    description: str | None
-    severity : str | None
-    published : bool | None
-
-class IncidentResponse(IncidentBase):
-    """Serialize an incident"""
-
-    model_config = ConfigDict(from_attributes=True)
-
-    incident_id: int
-    reported_at: datetime
 
 
 @app.get("/home", tags=["Getting started"])
@@ -147,3 +119,5 @@ def delete_incident(incident_id: int , db : Session = Depends(get_db)):
     db.delete(incident)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+

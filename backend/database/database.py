@@ -5,7 +5,8 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker , Session
 
 
 
-SQLALCHEMY_DATABASE_URL = "postgresql+psycopg2://<username>:<password>@<hostname>:<port>/<database_name>"
+#SQLALCHEMY_DATABASE_URL = "postgresql+psycopg2://<username>:<password>@<hostname>:<port>/<database_name>"
+
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 

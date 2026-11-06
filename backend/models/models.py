@@ -27,6 +27,6 @@ class Incident(Base):
     incident_id = Column(Integer , primary_key=True , nullable=False)
     incident_type = Column(String, nullable=False)
     description = Column(String , nullable=False)
-    severity = Column(String , nullable=False , server_default="low")
-    published = Column(Boolean , nullable=False , server_default='TRUE')
+    severity = Column(String , nullable=False, server_default="low")
+    published = Column(Boolean ,nullable=False, server_default=text('TRUE'))
     reported_at = Column(TIMESTAMP(timezone=True), nullable=False , server_default=text('now()'))
