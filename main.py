@@ -46,13 +46,36 @@ def home():
 @app.get("/incidents", response_model=list[IncidentResponse], tags=["Incidents"])
 def get_incidents(db : Session = Depends(get_db)):
     """Return all incidents."""
+    
     incidents = db.query(models.Incident).filter(models.Incident.published.is_(True)).all()
+
+    if not incidents:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No published incidents were found.",
+        )
+
     return incidents
 
 @app.get("/incidents/{incident_id}", response_model=IncidentResponse, tags=["Incidents"])
 def get_incident(incident_id: int , db : Session = Depends(get_db)):
     """Return one incident by its ID."""
-    matched_incident = db.query(models.Incident).filter(models.Incident.incident_id == incident_id,models.Incident.published.is_(True)).first()
+
+    matched_incident = (
+        db.query(models.Incident)
+        .filter(
+            models.Incident.incident_id == incident_id,
+            models.Incident.published.is_(True),
+        )
+        .first()
+    )
+
+    if matched_incident is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Published incident {incident_id} was not found.",
+        )
+
     return matched_incident
 
 
@@ -73,13 +96,30 @@ def create_incident(incident: IncidentCreate , db : Session = Depends(get_db)):
 
 @app.patch("/incidents/{incident_id}", response_model=IncidentResponse, tags=["Incidents"])
 def update_incident(incident_id: int, incident: IncidentUpdate , db : Session = Depends(get_db)):
-    """Replace the details of an existing incident."""
-    matched_incident_query = db.query(models.Incident).filter(models.Incident.incident_id == incident_id)
-    old_incident = matched_incident_query.first()
-    updated_incident = incident.model_dump()
-    matched_incident_query.update(
-        updated_incident,  synchronize_session=False
-    )
+    """Update the provided fields of an existing incident."""
+
+    old_incident = db.query(models.Incident).filter(
+        models.Incident.incident_id == incident_id
+    ).first()
+
+
+    if old_incident is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Incident {incident_id} was not found.",
+        )
+
+    updated_fields = incident.model_dump(exclude_unset=True)
+
+    if not updated_fields:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Provide at least one field to update.",
+        )
+
+    for field, value in updated_fields.items():
+        setattr(old_incident, field, value)
+    
     db.commit()
     db.refresh(old_incident)
     return old_incident
@@ -93,8 +133,17 @@ def update_incident(incident_id: int, incident: IncidentUpdate , db : Session = 
 )
 def delete_incident(incident_id: int , db : Session = Depends(get_db)):
     """Delete an incident."""
-    db.delete(
-        db.query(models.Incident).filter(models.Incident.incident_id == incident_id , models.Incident.published.is_(True)).first()
-    )
+    incident = db.query(models.Incident).filter(
+        models.Incident.incident_id == incident_id,
+        models.Incident.published.is_(True),
+    ).first()
+
+    if incident is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Published incident {incident_id} was not found.",
+        )
+
+    db.delete(incident)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
