@@ -1,0 +1,48 @@
+"""Pydantic schemas and role enum for user accounts."""
+
+from datetime import datetime
+from enum import StrEnum
+
+from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic_extra_types.phone_numbers import PhoneNumber
+
+
+class INphone(PhoneNumber):
+    """Validate phone numbers using India's default region and E.164 format."""
+
+    default_region_code = "IN"
+    phone_format = "E164"
+
+
+class UserRole(StrEnum):
+    """Roles assigned to registered users."""
+
+    CITIZEN = "citizen"
+    RESPONDER = "responder"
+    ADMIN = "admin"
+
+
+class User(BaseModel):
+    """Validate data required to register a user."""
+
+    user_fullname: str
+    user_phoneno: INphone
+    user_email: EmailStr
+    user_password: str
+
+
+class User_login(BaseModel):
+    """Validate a user's login credentials."""
+
+    email: EmailStr
+    password: str
+
+
+class User_response(BaseModel):
+    """Serialize non-sensitive user information in API responses."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    user_id: int
+    user_email: EmailStr
+    created_at: datetime

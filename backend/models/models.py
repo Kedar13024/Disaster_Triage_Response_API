@@ -1,6 +1,8 @@
 """SQLAlchemy ORM models for incidents """
 
 from backend.database.database import Base
+from backend.schemas.user_sch import UserRole
+from sqlalchemy.orm import relationship
 
 from sqlalchemy import (
     TIMESTAMP,
@@ -8,6 +10,8 @@ from sqlalchemy import (
     Column,
     Integer,
     String,
+    ForeignKey,
+    Enum as SQLEnum,
     text,
 )
 
@@ -30,3 +34,29 @@ class Incident(Base):
     severity = Column(String , nullable=False, server_default="low")
     published = Column(Boolean ,nullable=False, server_default=text('TRUE'))
     reported_at = Column(TIMESTAMP(timezone=True), nullable=False , server_default=text('now()'))
+    reported_by = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=True)
+
+    reporter = relationship("User", back_populates="incidents")
+
+
+class User(Base):
+    """Represent an application user and their login credentials."""
+
+    __tablename__ = "users"
+    user_id = Column(Integer, primary_key=True, nullable=False)
+    user_fullname = Column(String(50), nullable=False)
+    user_phoneno = Column(String(20), nullable=False)
+    user_email = Column(String, unique=True, nullable=False)
+    user_password = Column(String, nullable=False)
+    user_role = Column(
+        SQLEnum(
+            UserRole,
+            name="user_role",
+            values_callable=lambda enum: [role.value for role in enum],
+        ),
+        nullable=False,
+        server_default=UserRole.CITIZEN.value,
+    )
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
+
+    incidents = relationship("Incident", back_populates="reporter")

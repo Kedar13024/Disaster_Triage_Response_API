@@ -2,6 +2,8 @@ from fastapi import Depends, FastAPI, HTTPException, Response, status
 from backend.models import models
 from backend.database.database import engine, get_db , Session
 from backend.schemas.incident_sch import IncidentCreate , IncidentResponse , IncidentUpdate
+from backend.schemas.user_sch import User, User_response
+from backend.security.security import hashed_pass
 
 app = FastAPI(title="Disaster Triage Response API")
 
@@ -119,5 +121,36 @@ def delete_incident(incident_id: int , db : Session = Depends(get_db)):
     db.delete(incident)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@app.post(
+    "/users",
+    response_model=User_response,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Users"],
+)
+def create_user(user: User, db: Session = Depends(get_db)):
+    """Register a user with a securely hashed password."""
+    existing_user = (
+        db.query(models.User)
+        .filter(models.User.user_email == str(user.user_email))
+        .first()
+    )
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="An account with this email already exists.",
+        )
+
+    new_user = models.User(
+        user_fullname=user.user_fullname,
+        user_phoneno=str(user.user_phoneno),
+        user_email=str(user.user_email),
+        user_password=hashed_pass(user.user_password),
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
 
 
