@@ -3,9 +3,13 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker , Session
 
+from backend.security.config import get_settings
 
 
-SQLALCHEMY_DATABASE_URL = "postgresql+psycopg2://<username>:<password>@<hostname>:<port>/<database_name>"
+settings = get_settings()
+
+
+SQLALCHEMY_DATABASE_URL = f"postgresql+psycopg2://{settings.database_user}:{settings.database_pass}@{settings.database_host}:{settings.database_port}/{settings.database_name}"
 
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
