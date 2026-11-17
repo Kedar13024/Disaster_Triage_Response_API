@@ -153,4 +153,22 @@ def create_user(user: User, db: Session = Depends(get_db)):
     db.refresh(new_user)
     return new_user
 
+@app.get("/users/{user_id}",response_model=User_response,tags=["Users"],)
+def get_user(user_id: int , db: Session = Depends(get_db)):
+    """Return one user by its ID."""
 
+    matched_user = (
+        db.query(models.User)
+        .filter(
+            models.User.user_id == user_id
+        )
+        .first()
+    )
+
+    if matched_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"The user with id {user_id} doesnt't exist.",
+        )
+
+    return matched_user
