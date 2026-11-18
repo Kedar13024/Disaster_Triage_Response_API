@@ -30,14 +30,6 @@ class User(BaseModel):
     user_email: EmailStr
     user_password: str
 
-
-class User_login(BaseModel):
-    """Validate a user's login credentials."""
-
-    email: EmailStr
-    password: str
-
-
 class User_response(BaseModel):
     """Serialize non-sensitive user information in API responses."""
 

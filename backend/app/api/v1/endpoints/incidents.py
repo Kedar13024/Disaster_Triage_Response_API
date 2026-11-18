@@ -1,4 +1,5 @@
 from fastapi import Depends, HTTPException, Response, status , APIRouter
+from backend.core.oauth2 import get_current_user
 from backend.models import models
 from backend.database.database import get_db , Session
 from backend.schemas.incident_sch import IncidentCreate , IncidentResponse , IncidentUpdate
@@ -8,7 +9,7 @@ router = APIRouter(prefix="/incidents" , tags=["Incidents"])
 
 
 @router.get("/", response_model=list[IncidentResponse])
-def get_incidents(db : Session = Depends(get_db)):
+def get_incidents(db : Session = Depends(get_db) , current_user : int = Depends(get_current_user)):
     """Return all incidents."""
     
     incidents = db.query(models.Incident).filter(models.Incident.published.is_(True)).all()
@@ -22,7 +23,7 @@ def get_incidents(db : Session = Depends(get_db)):
     return incidents
 
 @router.get("/{incident_id}", response_model=IncidentResponse)
-def get_incident(incident_id: int , db : Session = Depends(get_db)):
+def get_incident(incident_id: int , db : Session = Depends(get_db) , current_user : int = Depends(get_current_user)):
     """Return one incident by its ID."""
 
     matched_incident = (
@@ -43,8 +44,8 @@ def get_incident(incident_id: int , db : Session = Depends(get_db)):
     return matched_incident
 
 
-@router.post("/",response_model=IncidentResponse,status_code=status.HTTP_201_CREATED)
-def create_incident(incident: IncidentCreate , db : Session = Depends(get_db)):
+@router.post("/",response_model=IncidentResponse,status_code=status.HTTP_201_CREATED )
+def create_incident(incident: IncidentCreate , db : Session = Depends(get_db),  current_user : int = Depends(get_current_user)):
     """Add a new incident and assign it the next available ID."""
     new_incident = models.Incident(**incident.model_dump())
     db.add(new_incident)
@@ -53,8 +54,8 @@ def create_incident(incident: IncidentCreate , db : Session = Depends(get_db)):
     return new_incident
 
 
-@router.patch("/{incident_id}", response_model=IncidentResponse)
-def update_incident(incident_id: int, incident: IncidentUpdate , db : Session = Depends(get_db)):
+@router.patch("/{incident_id}", response_model=IncidentResponse )
+def update_incident(incident_id: int, incident: IncidentUpdate , db : Session = Depends(get_db) , current_user : int = Depends(get_current_user)):
     """Update the provided fields of an existing incident."""
 
     old_incident = db.query(models.Incident).filter(
@@ -85,8 +86,8 @@ def update_incident(incident_id: int, incident: IncidentUpdate , db : Session = 
 
 
 
-@router.delete("/{incident_id}", status_code=status.HTTP_204_NO_CONTENT,)
-def delete_incident(incident_id: int , db : Session = Depends(get_db)):
+@router.delete("/{incident_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_incident(incident_id: int , db : Session = Depends(get_db), current_user : int = Depends(get_current_user)):
     """Delete an incident."""
     incident = db.query(models.Incident).filter(
         models.Incident.incident_id == incident_id,
