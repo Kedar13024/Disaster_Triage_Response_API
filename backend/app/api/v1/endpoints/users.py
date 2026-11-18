@@ -2,7 +2,7 @@ from fastapi import Depends, HTTPException, status , APIRouter
 from backend.models import models
 from backend.database.database import get_db , Session
 from backend.schemas.user_sch import User, User_response
-from backend.security.security import hashed_pass
+from backend.core.security import hashed_pass
 
 
 router = APIRouter(prefix="/users" , tags=["Users"])
