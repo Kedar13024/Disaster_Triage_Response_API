@@ -37,4 +37,5 @@ class User_response(BaseModel):
 
     user_id: int
     user_email: EmailStr
+    user_role : UserRole
     created_at: datetime

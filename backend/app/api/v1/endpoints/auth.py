@@ -23,4 +23,4 @@ def login(creds : OAuth2PasswordRequestForm = Depends() , db : Session = Depends
 
     access_token = create_access_token(data={"user_id":existing_user.user_id})
 
-    return {"access_token" : access_token , "token_type" :"bearer"}
+    return {"access_token" : access_token , "token_type" :"bearer" , "role": existing_user.user_role}

@@ -1,7 +1,5 @@
 from fastapi import FastAPI
 from backend.app.api.v1.endpoints import auth, incidents , users
-from backend.models import models
-from backend.database.database import engine
 
 app = FastAPI(title="Disaster Triage Response API")
 

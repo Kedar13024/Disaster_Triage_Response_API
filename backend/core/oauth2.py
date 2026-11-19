@@ -7,6 +7,7 @@ from backend.core.config import get_settings
 from backend.database.database import get_db
 from backend.models.models import User
 from backend.schemas.auth_sch import Token, TokenData
+from backend.schemas.user_sch import UserRole
 
 
 settings = get_settings()
@@ -51,3 +52,15 @@ def get_current_user(token : str = Depends(oauth2_scheme) , db : Session = Depen
 
     return current_user
 
+
+def require_roles(*allowed_roles : UserRole):
+    """Allow an endpoint only to users with one of the listed roles."""
+    def role_checker(current_user = Depends(get_current_user)):
+        if current_user.user_role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to perform this action.",
+            )
+        return current_user
+
+    return role_checker

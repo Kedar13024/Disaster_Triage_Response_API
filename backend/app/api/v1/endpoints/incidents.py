@@ -3,6 +3,7 @@ from backend.core.oauth2 import get_current_user
 from backend.models import models
 from backend.database.database import get_db , Session
 from backend.schemas.incident_sch import IncidentCreate , IncidentResponse , IncidentUpdate
+from backend.schemas.user_sch import UserRole
 
 
 router = APIRouter(prefix="/incidents" , tags=["Incidents"])
@@ -105,8 +106,11 @@ def delete_incident(incident_id: int , db : Session = Depends(get_db), current_u
             detail=f"Published incident {incident_id} was not found.",
         )
 
-    if incident.reported_by != current_user.user_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN , detail= "You do not have permission to update this incident."
+    is_owner = incident.reported_by == current_user.user_id
+    is_admin = current_user.user_role == UserRole.ADMIN
+
+    if not is_owner and not is_admin :
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN , detail= "You do not have permission to delete this incident."
         )
 
     db.delete(incident)

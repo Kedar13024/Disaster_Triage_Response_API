@@ -1,7 +1,8 @@
 from fastapi import Depends, HTTPException, status , APIRouter
+from backend.core.oauth2 import require_roles
 from backend.models import models
 from backend.database.database import get_db , Session
-from backend.schemas.user_sch import User, User_response
+from backend.schemas.user_sch import User, User_response , UserRole
 from backend.core.security import hashed_pass
 
 
@@ -26,13 +27,15 @@ def create_user(user: User, db: Session = Depends(get_db)):
         user_phoneno=str(user.user_phoneno),
         user_email=str(user.user_email),
         user_password=hashed_pass(user.user_password),
+        user_role=UserRole.CITIZEN,
     )
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
     return new_user
 
-@router.get("/{user_id}",response_model=User_response)
+
+@router.get("/{user_id}",response_model=User_response , dependencies=[Depends(require_roles(UserRole.ADMIN))])
 def get_user(user_id: int , db: Session = Depends(get_db)):
     """Return one user by its ID."""
 
