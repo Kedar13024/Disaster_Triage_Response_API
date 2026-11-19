@@ -1,6 +1,8 @@
 from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 
+from backend.schemas.user_sch import User_response
+
 class IncidentBase(BaseModel):
     """An incident returned by the API."""
 
@@ -33,3 +35,4 @@ class IncidentResponse(IncidentBase):
     incident_id: int
     reported_at: datetime
     reported_by : int
+    reporter : User_response
