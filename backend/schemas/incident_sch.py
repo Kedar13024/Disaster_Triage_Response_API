@@ -20,10 +20,10 @@ class IncidentCreate(BaseModel):
 
 class IncidentUpdate(BaseModel):
     """Fields needed to update an incident."""
-    incident_type: str | None
-    description: str | None
-    severity : str | None
-    published : bool | None
+    incident_type: str | None = None
+    description: str | None = None 
+    severity : str | None = None
+    published : bool | None = None
 
 class IncidentResponse(IncidentBase):
     """Serialize an incident"""
@@ -32,3 +32,4 @@ class IncidentResponse(IncidentBase):
 
     incident_id: int
     reported_at: datetime
+    reported_by : int
