@@ -1,3 +1,5 @@
+"""Configure Alembic database migrations for the application models."""
+
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config

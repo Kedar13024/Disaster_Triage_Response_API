@@ -1,3 +1,5 @@
+"""Authentication routes for exchanging credentials for access tokens."""
+
 from fastapi import Depends, HTTPException, status , APIRouter
 from fastapi.security import OAuth2PasswordRequestForm
 from backend.core.oauth2 import create_access_token
@@ -11,6 +13,7 @@ router = APIRouter(prefix="/login" , tags=["Authentication"])
 
 @router.post("/" , response_model= Token)
 def login(creds : OAuth2PasswordRequestForm = Depends() , db : Session = Depends(get_db)):
+    """Verify submitted credentials and return a signed bearer token."""
 
     existing_user = db.query(models.User).filter(models.User.user_email == creds.username).first()
 

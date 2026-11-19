@@ -1,3 +1,5 @@
+"""JWT creation, authentication dependencies, and role authorization."""
+
 from datetime import datetime, timedelta , timezone
 from fastapi import Depends, HTTPException , status
 from fastapi.security import OAuth2PasswordBearer
@@ -16,6 +18,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl='login')
 
 
 def create_access_token(data : dict):
+    """Encode token claims with an expiration using configured JWT settings."""
 
     payload = data.copy()
 
@@ -26,6 +29,7 @@ def create_access_token(data : dict):
     return jwt.encode(payload,settings.secret_key,algorithm=settings.algorithm)
 
 def verify_access_token(token : Token , cred_exception):
+    """Decode a bearer token and return its user ID or raise the credential error."""
 
     try:
         payload = jwt.decode(token,settings.secret_key,algorithms=[settings.algorithm])
@@ -43,6 +47,7 @@ def verify_access_token(token : Token , cred_exception):
 
 
 def get_current_user(token : str = Depends(oauth2_scheme) , db : Session = Depends(get_db)):
+    """Resolve the authenticated user from the bearer token and database."""
 
     cred_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token", headers={"WWW-Authenticate":"Bearer"})
 
@@ -56,6 +61,7 @@ def get_current_user(token : str = Depends(oauth2_scheme) , db : Session = Depen
 def require_roles(*allowed_roles : UserRole):
     """Allow an endpoint only to users with one of the listed roles."""
     def role_checker(current_user = Depends(get_current_user)):
+        """Reject the request unless the authenticated user has an allowed role."""
         if current_user.user_role not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

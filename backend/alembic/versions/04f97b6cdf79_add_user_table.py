@@ -16,6 +16,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    """Create the users table and link incidents to their reporters."""
     user_role = sa.Enum("citizen", "responder", "admin", name="user_role")
     user_role.create(op.get_bind(), checkfirst=True)
     op.create_table(
@@ -40,6 +41,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Remove the user table and reporter relationship."""
     op.drop_constraint("fk_incidents_reported_by_users", "incidents", type_="foreignkey")
     op.drop_column("incidents", "reported_by")
     op.drop_table("users")

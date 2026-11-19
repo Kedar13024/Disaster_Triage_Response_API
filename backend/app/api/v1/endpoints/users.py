@@ -1,3 +1,5 @@
+"""Routes for user registration and administrator user lookup."""
+
 from fastapi import Depends, HTTPException, status , APIRouter
 from backend.core.oauth2 import require_roles
 from backend.models import models
@@ -37,7 +39,7 @@ def create_user(user: User, db: Session = Depends(get_db)):
 
 @router.get("/{user_id}",response_model=User_response , dependencies=[Depends(require_roles(UserRole.ADMIN))])
 def get_user(user_id: int , db: Session = Depends(get_db)):
-    """Return one user by its ID."""
+    """Return a user's public profile by ID for an administrator."""
 
     matched_user = (
         db.query(models.User)
