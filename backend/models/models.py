@@ -34,7 +34,7 @@ class Incident(Base):
     severity = Column(String , nullable=False, server_default="low")
     published = Column(Boolean ,nullable=False, server_default=text('TRUE'))
     reported_at = Column(TIMESTAMP(timezone=True), nullable=False , server_default=text('now()'))
-    reported_by = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=True)
+    reported_by = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
 
     reporter = relationship("User", back_populates="incidents")
 

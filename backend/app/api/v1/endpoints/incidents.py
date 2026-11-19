@@ -47,7 +47,7 @@ def get_incident(incident_id: int , db : Session = Depends(get_db) , current_use
 @router.post("/",response_model=IncidentResponse,status_code=status.HTTP_201_CREATED )
 def create_incident(incident: IncidentCreate , db : Session = Depends(get_db),  current_user : int = Depends(get_current_user)):
     """Add a new incident and assign it the next available ID."""
-    new_incident = models.Incident(**incident.model_dump())
+    new_incident = models.Incident(reported_by=current_user.user_id,**incident.model_dump())
     db.add(new_incident)
     db.commit()
     db.refresh(new_incident)
@@ -67,6 +67,11 @@ def update_incident(incident_id: int, incident: IncidentUpdate , db : Session = 
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Incident {incident_id} was not found.",
+        )
+
+    if old_incident.reported_by != current_user.user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN , detail= "You do not have permission to update this incident."
         )
 
     updated_fields = incident.model_dump(exclude_unset=True)
@@ -98,6 +103,10 @@ def delete_incident(incident_id: int , db : Session = Depends(get_db), current_u
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Published incident {incident_id} was not found.",
+        )
+
+    if incident.reported_by != current_user.user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN , detail= "You do not have permission to update this incident."
         )
 
     db.delete(incident)
