@@ -5,7 +5,6 @@ from backend.database.database import engine
 
 app = FastAPI(title="Disaster Triage Response API")
 
-models.Base.metadata.create_all(bind=engine)
 
 @app.get("/home", tags=["Home"])
 def home():
