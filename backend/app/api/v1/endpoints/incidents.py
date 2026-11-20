@@ -92,16 +92,15 @@ def update_incident(incident_id: int, incident: IncidentUpdate , db : Session = 
 
 @router.delete("/{incident_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_incident(incident_id: int , db : Session = Depends(get_db), current_user : int = Depends(get_current_user)):
-    """Delete a published incident when the user owns it or is an administrator."""
+    """Delete a incident when the user owns it or is an administrator."""
     incident = db.query(models.Incident).filter(
         models.Incident.incident_id == incident_id,
-        models.Incident.published.is_(True),
     ).first()
 
     if incident is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Published incident {incident_id} was not found.",
+            detail=f"Incident {incident_id} was not found.",
         )
 
     is_owner = incident.reported_by == current_user.user_id
