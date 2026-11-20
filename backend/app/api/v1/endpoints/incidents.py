@@ -12,7 +12,7 @@ router = APIRouter(prefix="/incidents" , tags=["Incidents"])
 
 
 @router.get("/", response_model=list[IncidentResponse])
-def get_incidents(db : Session = Depends(get_db) , current_user : int = Depends(get_current_user)):
+def get_incidents(db : Session = Depends(get_db) , current_user : models.User = Depends(get_current_user)):
     """Return all published incidents to the authenticated user."""
     
     incidents = db.query(models.Incident).filter(models.Incident.published.is_(True)).all()
@@ -20,7 +20,7 @@ def get_incidents(db : Session = Depends(get_db) , current_user : int = Depends(
     return incidents
 
 @router.get("/{incident_id}", response_model=IncidentResponse)
-def get_incident(incident_id: int , db : Session = Depends(get_db) , current_user : int = Depends(get_current_user)):
+def get_incident(incident_id: int , db : Session = Depends(get_db) , current_user : models.User = Depends(get_current_user)):
     """Return a published incident by ID or raise 404 if it is unavailable."""
 
     matched_incident = (
@@ -42,7 +42,7 @@ def get_incident(incident_id: int , db : Session = Depends(get_db) , current_use
 
 
 @router.post("/",response_model=IncidentResponse,status_code=status.HTTP_201_CREATED )
-def create_incident(incident: IncidentCreate , db : Session = Depends(get_db),  current_user : int = Depends(get_current_user)):
+def create_incident(incident: IncidentCreate , db : Session = Depends(get_db),  current_user : models.User = Depends(get_current_user)):
     """Create an incident attributed to the authenticated user."""
     new_incident = models.Incident(reported_by=current_user.user_id,**incident.model_dump())
     db.add(new_incident)
@@ -52,7 +52,7 @@ def create_incident(incident: IncidentCreate , db : Session = Depends(get_db),  
 
 
 @router.patch("/{incident_id}", response_model=IncidentResponse )
-def update_incident(incident_id: int, incident: IncidentUpdate , db : Session = Depends(get_db) , current_user : int = Depends(get_current_user)):
+def update_incident(incident_id: int, incident: IncidentUpdate , db : Session = Depends(get_db) , current_user : models.User = Depends(get_current_user)):
     """Apply supplied changes to an incident owned by the authenticated user."""
 
     old_incident = db.query(models.Incident).filter(
@@ -70,7 +70,7 @@ def update_incident(incident_id: int, incident: IncidentUpdate , db : Session = 
     is_admin = current_user.user_role == UserRole.ADMIN
     
     if not is_owner and not is_admin :
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN , detail= "You do not have permission to delete this incident."
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN , detail= "You do not have permission to update this incident."
         )
 
     updated_fields = incident.model_dump(exclude_unset=True)
@@ -91,7 +91,7 @@ def update_incident(incident_id: int, incident: IncidentUpdate , db : Session = 
 
 
 @router.delete("/{incident_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_incident(incident_id: int , db : Session = Depends(get_db), current_user : int = Depends(get_current_user)):
+def delete_incident(incident_id: int , db : Session = Depends(get_db), current_user : models.User = Depends(get_current_user)):
     """Delete a incident when the user owns it or is an administrator."""
     incident = db.query(models.Incident).filter(
         models.Incident.incident_id == incident_id,
