@@ -17,12 +17,6 @@ def get_incidents(db : Session = Depends(get_db) , current_user : int = Depends(
     
     incidents = db.query(models.Incident).filter(models.Incident.published.is_(True)).all()
 
-    if not incidents:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="No published incidents were found.",
-        )
-
     return incidents
 
 @router.get("/{incident_id}", response_model=IncidentResponse)
