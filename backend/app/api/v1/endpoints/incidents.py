@@ -66,9 +66,11 @@ def update_incident(incident_id: int, incident: IncidentUpdate , db : Session = 
             detail=f"Incident {incident_id} was not found.",
         )
 
-    if old_incident.reported_by != current_user.user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN , detail= "You do not have permission to update this incident."
+    is_owner = old_incident.reported_by == current_user.user_id
+    is_admin = current_user.user_role == UserRole.ADMIN
+    
+    if not is_owner and not is_admin :
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN , detail= "You do not have permission to delete this incident."
         )
 
     updated_fields = incident.model_dump(exclude_unset=True)
