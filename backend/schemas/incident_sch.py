@@ -1,6 +1,6 @@
 """Pydantic request and response schemas for incident endpoints."""
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
 
 from backend.schemas.user_sch import User_response
@@ -16,14 +16,24 @@ class IncidentBase(BaseModel):
 
 class IncidentCreate(BaseModel):
     """Validate the fields accepted when a user reports an incident."""
-    incident_type: str
-    description: str
+
+    model_config = ConfigDict(
+        extra="forbid", str_strip_whitespace=True
+        )
+
+    incident_type: str = Field(min_length=3 , max_length=50)
+    description: str = Field(min_length=10 , max_length=2000)
 
 
 class IncidentUpdate(BaseModel):
     """Validate optional fields that may be changed on an incident."""
-    incident_type: str | None = None
-    description: str | None = None 
+
+    model_config = ConfigDict(
+        extra="forbid" ,  str_strip_whitespace=True
+        )
+
+    incident_type: str | None = Field(min_length=3 , max_length=50 , default=None)
+    description: str | None = Field(min_length=10 , max_length=2000 , default=None)
 
 class IncidentResponse(IncidentBase):
     """Serialize an incident, including its identifiers and reporter."""
