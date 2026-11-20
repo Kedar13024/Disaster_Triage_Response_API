@@ -55,6 +55,9 @@ def get_current_user(token : str = Depends(oauth2_scheme) , db : Session = Depen
 
     current_user = db.query(User).filter(User.user_id == token.id).first()
 
+    if current_user is None:
+        raise cred_exception
+
     return current_user
 
 
