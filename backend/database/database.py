@@ -1,6 +1,6 @@
 """SQLAlchemy database engine, session, and base-model configuration."""
 
-from sqlalchemy import create_engine
+from sqlalchemy import URL, create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker , Session
 
 from backend.core.config import get_settings
@@ -8,13 +8,23 @@ from backend.core.config import get_settings
 
 settings = get_settings()
 
-
-SQLALCHEMY_DATABASE_URL = f"postgresql+psycopg2://{settings.database_user}:{settings.database_pass}@{settings.database_host}:{settings.database_port}/{settings.database_name}"
+SQLALCHEMY_DATABASE_URL = URL.create(
+    drivername="postgresql+psycopg2",
+    username=settings.database_user,
+    password=settings.database_password,
+    host=settings.database_host,
+    port=settings.database_port,
+    database=settings.database_name
+)
 
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
-SessionLocal = sessionmaker(autocommit=False,autoflush=False , bind=engine)
+SessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False , 
+    bind=engine
+    )
 
 class Base(DeclarativeBase):
     """Provide the declarative base class for all ORM models."""

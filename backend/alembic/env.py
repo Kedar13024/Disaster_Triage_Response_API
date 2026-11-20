@@ -3,7 +3,7 @@
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from sqlalchemy import pool , URL
 
 from alembic import context
 
@@ -21,9 +21,16 @@ if config.config_file_name is not None:
 
 settings = get_settings()
 
-sqlalchemy_url= f"postgresql+psycopg2://{settings.database_user}:{settings.database_pass}@{settings.database_host}/{settings.database_name}"
+sqlalchemy_url=URL.create(
+    drivername="postgresql+psycopg2",
+    username=settings.database_user,
+    password=settings.database_password,
+    host=settings.database_host,
+    port=settings.database_port,
+    database=settings.database_name
+)
 
-config.set_main_option("sqlalchemy.url",sqlalchemy_url)
+config.set_main_option("sqlalchemy.url",sqlalchemy_url.render_as_string(hide_password=False))
 
 # add your model's MetaData object here
 # for 'autogenerate' support
