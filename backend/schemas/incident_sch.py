@@ -18,16 +18,12 @@ class IncidentCreate(BaseModel):
     """Validate the fields accepted when a user reports an incident."""
     incident_type: str
     description: str
-    severity : str = "low"
-    published : bool = True
 
 
 class IncidentUpdate(BaseModel):
     """Validate optional fields that may be changed on an incident."""
     incident_type: str | None = None
     description: str | None = None 
-    severity : str | None = None
-    published : bool | None = None
 
 class IncidentResponse(IncidentBase):
     """Serialize an incident, including its identifiers and reporter."""
