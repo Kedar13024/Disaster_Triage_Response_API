@@ -1,7 +1,11 @@
 """Routes for creating, viewing, updating, and deleting incidents."""
 
 
+from datetime import datetime
+from typing import Literal
+
 from fastapi import Depends, HTTPException, Query, Response, status , APIRouter
+from sqlalchemy import case
 from backend.core.oauth2 import get_current_user
 from backend.models import models
 from backend.database.database import get_db , Session
@@ -12,17 +16,92 @@ from backend.schemas.user_sch import UserRole
 router = APIRouter(prefix="/incidents" , tags=["Incidents"])
 
 
-@router.get("/", response_model=list[IncidentResponse])
+@router.get("", response_model=list[IncidentResponse])
 def get_incidents(
     db : Session = Depends(get_db) ,
     limit : int = Query(20,ge=1,le=100),
-    skip : int = Query(0 , ge=0)
+    skip : int = Query(0 , ge=0),
+    severity : Literal["low", "medium", "high", "critical"] | None = Query(default=None),
+    incident_type : str = Query(default=None),
+    start_date : datetime = Query(default=None),
+    end_date : datetime = Query(default=None),
+    search: str | None = Query(default=None, min_length=1, max_length=200),
+    sort_by: Literal["newest", "oldest", "severity"] = Query(default="newest"),
     ):
     """Return paginated published incidents."""
+
+    query = db.query(models.Incident).filter(models.Incident.published.is_(True))
+
+    if severity is not None:
+        query = query.filter(models.Incident.severity == severity)
+
+    if incident_type is not None:
+        incident_type = incident_type.strip()
+
+        if not incident_type:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Incident type cannot contain only whitespace.",
+             )
+
+        query = query.filter(
+            models.Incident.incident_type == incident_type
+        )
+
+    if start_date is not None and end_date is not None:
+        if start_date > end_date:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="start_date must be earlier than or equal to end_date.",
+            )
+
+    if start_date is not None:
+        query = query.filter(models.Incident.reported_at >= start_date)
+
+    if end_date is not None:
+        query = query.filter(models.Incident.reported_at <= end_date)
+
+
+    if search is not None:
+        search = search.strip()
+
+        if not search:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Search cannot contain only whitespace.",
+            )
+
+        query = query.filter(models.Incident.description.ilike(f"%{search}%"))
+
+    if sort_by == "newest":
+        query = query.order_by(
+            models.Incident.reported_at.desc(),
+            models.Incident.incident_id.desc(),
+        )
+
+    elif sort_by == "oldest":
+        query = query.order_by(
+            models.Incident.reported_at.asc(),
+            models.Incident.incident_id.asc(),
+        )
+
+    elif sort_by == "severity":
+        severity_order = case(
+            (models.Incident.severity == "critical", 1),
+            (models.Incident.severity == "high", 2),
+            (models.Incident.severity == "medium", 3),
+            (models.Incident.severity == "low", 4),
+            else_=5,
+        )
+
+        query = query.order_by(
+            severity_order,
+            models.Incident.reported_at.desc(),
+            models.Incident.incident_id.desc(),
+        )
     
     incidents = (
-    db.query(models.Incident).filter(models.Incident.published.is_(True))
-    .order_by(models.Incident.reported_at.desc() , models.Incident.incident_id.desc())
+    query
     .limit(limit)
     .offset(skip)
     .all()
@@ -38,10 +117,10 @@ def get_my_incidents(
     current_user : models.User = Depends(get_current_user)
     ):
     """Return paginated incidents reported by current user."""
+
     
     incidents = (
     db.query( models.Incident).filter(models.Incident.reported_by == current_user.user_id)
-    .order_by(models.Incident.reported_at.desc() , models.Incident.incident_id.desc())
     .limit(limit)
     .offset(skip)
     .all()
