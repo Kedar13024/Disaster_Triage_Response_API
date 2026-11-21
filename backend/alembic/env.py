@@ -8,6 +8,7 @@ from sqlalchemy import pool , URL
 from alembic import context
 
 from backend.database.database import Base
+from backend.models import models
 from backend.core.config import get_settings
 
 # this is the Alembic Config object, which provides

@@ -1,6 +1,7 @@
 """Routes for creating, viewing, updating, and deleting incidents."""
 
-from fastapi import Depends, HTTPException, Response, status , APIRouter
+
+from fastapi import Depends, HTTPException, Query, Response, status , APIRouter
 from backend.core.oauth2 import get_current_user
 from backend.models import models
 from backend.database.database import get_db , Session
@@ -12,12 +13,42 @@ router = APIRouter(prefix="/incidents" , tags=["Incidents"])
 
 
 @router.get("/", response_model=list[IncidentResponse])
-def get_incidents(db : Session = Depends(get_db) , current_user : models.User = Depends(get_current_user)):
-    """Return all published incidents to the authenticated user."""
+def get_incidents(
+    db : Session = Depends(get_db) ,
+    limit : int = Query(20,ge=1,le=100),
+    skip : int = Query(0 , ge=0)
+    ):
+    """Return paginated published incidents."""
     
-    incidents = db.query(models.Incident).filter(models.Incident.published.is_(True)).all()
+    incidents = (
+    db.query(models.Incident).filter(models.Incident.published.is_(True))
+    .order_by(models.Incident.reported_at.desc() , models.Incident.incident_id.desc())
+    .limit(limit)
+    .offset(skip)
+    .all()
+    )
 
     return incidents
+
+@router.get("/my", response_model=list[IncidentResponse])
+def get_my_incidents(
+    db : Session = Depends(get_db) ,
+    limit : int = Query(20,ge=1,le=100),
+    skip : int = Query(0 , ge=0),
+    current_user : models.User = Depends(get_current_user)
+    ):
+    """Return paginated incidents reported by current user."""
+    
+    incidents = (
+    db.query( models.Incident).filter(models.Incident.reported_by == current_user.user_id)
+    .order_by(models.Incident.reported_at.desc() , models.Incident.incident_id.desc())
+    .limit(limit)
+    .offset(skip)
+    .all()
+    )
+
+    return incidents
+
 
 @router.get("/{incident_id}", response_model=IncidentResponse)
 def get_incident(incident_id: int , db : Session = Depends(get_db) , current_user : models.User = Depends(get_current_user)):
@@ -26,17 +57,26 @@ def get_incident(incident_id: int , db : Session = Depends(get_db) , current_use
     matched_incident = (
         db.query(models.Incident)
         .filter(
-            models.Incident.incident_id == incident_id,
-            models.Incident.published.is_(True),
-        )
-        .first()
+            models.Incident.incident_id == incident_id ,
+        ).first()
     )
 
-    if matched_incident is None:
+    if matched_incident is None :
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Published incident {incident_id} was not found.",
         )
+
+    is_owner = matched_incident.reported_by == current_user.user_id
+    is_admin = current_user.user_role == UserRole.ADMIN
+
+
+    if matched_incident:
+        if not matched_incident.published and not is_owner and not is_admin:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Published incident {incident_id} was not found.",
+            )
 
     return matched_incident
 

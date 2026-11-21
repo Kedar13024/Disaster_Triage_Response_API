@@ -13,6 +13,7 @@ from sqlalchemy import (
     ForeignKey,
     Enum as SQLEnum,
     text,
+    Index
 )
 
 class Incident(Base):
@@ -37,6 +38,22 @@ class Incident(Base):
     reported_by = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
 
     reporter = relationship("User", back_populates="incidents")
+
+    __table_args__ = (
+        Index(
+            "ix_incidents_published_feed",
+            "reported_at",
+            "incident_id",
+            postgresql_where=text("published = TRUE"),
+        ),
+        Index(
+            "ix_incidents_reporter_feed",
+            "reported_by",
+            "reported_at",
+            "incident_id",
+        ),
+    )
+    
 
 
 class User(Base):
