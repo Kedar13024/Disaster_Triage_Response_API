@@ -30,6 +30,7 @@ class Incident(Base):
 
     __tablename__ = "incidents"
     incident_id = Column(Integer , primary_key=True , nullable=False)
+    incident_category = Column(String, nullable=False)
     incident_type = Column(String, nullable=False)
     description = Column(String , nullable=False)
     severity = Column(String , nullable=False, server_default="low")

@@ -1,25 +1,15 @@
 """Pydantic request and response schemas for incident endpoints."""
 
 
-from enum import StrEnum
-
 from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
 
+from backend.domain.incident_taxnomy import IncidentCategory , IncidentType
 from backend.schemas.user_sch import User_response
-
-class IncidentType(StrEnum):
-    FLOOD = "Flood"
-    EARTHQUAKE = "Earthquake"
-    FIRE = "Fire"
-    LANDSLIDE = "Landslide"
-    CYCLONE = "Cyclone"
-    MED_EM = "Medical Emergency"
-    OTHER = "Other"
-
 class IncidentBase(BaseModel):
     """An incident returned by the API."""
 
+    incident_category : IncidentCategory
     incident_type: IncidentType
     description: str
     severity : str
@@ -33,6 +23,7 @@ class IncidentCreate(BaseModel):
         extra="forbid", str_strip_whitespace=True
         )
 
+    incident_category : IncidentCategory
     incident_type: IncidentType
     description: str = Field(min_length=10 , max_length=2000)
 

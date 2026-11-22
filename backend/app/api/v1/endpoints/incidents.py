@@ -7,6 +7,7 @@ from typing import Literal
 from fastapi import Depends, HTTPException, Query, Response, status , APIRouter
 from sqlalchemy import case
 from backend.core.oauth2 import get_current_user
+from backend.domain.incident_taxnomy import IncidentCategory, IncidentType
 from backend.models import models
 from backend.database.database import get_db , Session
 from backend.schemas.incident_sch import IncidentCreate , IncidentResponse , IncidentUpdate
@@ -22,7 +23,8 @@ def get_incidents(
     limit : int = Query(20,ge=1,le=100),
     skip : int = Query(0 , ge=0),
     severity : Literal["low", "medium", "high", "critical"] | None = Query(default=None),
-    incident_type : str = Query(default=None),
+    incident_category : IncidentCategory = Query(default=None),
+    incident_type : IncidentType = Query(default=None),
     start_date : datetime = Query(default=None),
     end_date : datetime = Query(default=None),
     search: str | None = Query(default=None, min_length=1, max_length=200),
@@ -35,15 +37,12 @@ def get_incidents(
     if severity is not None:
         query = query.filter(models.Incident.severity == severity)
 
+    if incident_category is not None:
+        query = query.filter(
+            models.Incident.incident_category == incident_category.value
+        )
+
     if incident_type is not None:
-        incident_type = incident_type.strip()
-
-        if not incident_type:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Incident type cannot contain only whitespace.",
-             )
-
         query = query.filter(
             models.Incident.incident_type == incident_type
         )
