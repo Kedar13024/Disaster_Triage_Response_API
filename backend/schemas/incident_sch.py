@@ -35,6 +35,7 @@ class IncidentUpdate(BaseModel):
         extra="forbid" ,  str_strip_whitespace=True
         )
 
+    incident_category : IncidentCategory | None = None
     incident_type: IncidentType | None = None
     description: str | None = Field(min_length=10 , max_length=2000 , default=None)
 

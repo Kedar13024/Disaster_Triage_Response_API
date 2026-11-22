@@ -10,7 +10,7 @@ from backend.core.security import hashed_pass
 
 router = APIRouter(prefix="/users" , tags=["Users"])
 
-@router.post("/",response_model=User_response,status_code=status.HTTP_201_CREATED,)
+@router.post("",response_model=User_response,status_code=status.HTTP_201_CREATED,)
 def create_user(user: User, db: Session = Depends(get_db)):
     """Register a user with a securely hashed password."""
     existing_user = (
