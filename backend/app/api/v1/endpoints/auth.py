@@ -18,11 +18,11 @@ def login(creds : OAuth2PasswordRequestForm = Depends() , db : Session = Depends
     existing_user = db.query(models.User).filter(models.User.user_email == creds.username).first()
 
     if not existing_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND , detail="User does not exist!")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED , detail="Invalid credentials!")
 
     if existing_user:
         if not verify_pass(creds.password , existing_user.user_password):
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND , detail="Invalid credentials!")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED , detail="Invalid credentials!")
 
     access_token = create_access_token(data={"user_id":existing_user.user_id})
 
