@@ -50,7 +50,7 @@ def get_incidents(
     if start_date is not None and end_date is not None:
         if start_date > end_date:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail="start_date must be earlier than or equal to end_date.",
             )
 
@@ -66,7 +66,7 @@ def get_incidents(
 
         if not search:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail="Search cannot contain only whitespace.",
             )
 
