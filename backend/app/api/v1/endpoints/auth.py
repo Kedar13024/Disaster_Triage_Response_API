@@ -11,7 +11,7 @@ from backend.schemas.auth_sch import Token
 
 router = APIRouter(prefix="/login" , tags=["Authentication"])
 
-@router.post("/" , response_model= Token)
+@router.post("" , response_model= Token)
 def login(creds : OAuth2PasswordRequestForm = Depends() , db : Session = Depends(get_db)):
     """Verify submitted credentials and return a signed bearer token."""
 

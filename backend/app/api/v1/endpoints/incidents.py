@@ -159,7 +159,7 @@ def get_incident(incident_id: int , db : Session = Depends(get_db) , current_use
     return matched_incident
 
 
-@router.post("/",response_model=IncidentResponse,status_code=status.HTTP_201_CREATED )
+@router.post("",response_model=IncidentResponse,status_code=status.HTTP_201_CREATED )
 def create_incident(incident: IncidentCreate , db : Session = Depends(get_db),  current_user : models.User = Depends(get_current_user)):
     """Create an incident attributed to the authenticated user."""
     new_incident = models.Incident(reported_by=current_user.user_id,**incident.model_dump())
