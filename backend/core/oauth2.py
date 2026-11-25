@@ -50,6 +50,9 @@ def get_current_user(token : str = Depends(oauth2_scheme) , db : Session = Depen
 
     cred_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token", headers={"WWW-Authenticate":"Bearer"})
 
+    if token is None:
+        raise cred_exception
+    
     token = verify_access_token(token , cred_exception)
 
     current_user = db.query(User).filter(User.user_id == token.id).first()
@@ -64,6 +67,11 @@ def get_optional_current_user(
     token: str | None = Depends(oauth2_scheme),
     db: Session = Depends(get_db),
 ):
+    """Return a user for a valid token, or None when no token or an invalid token is supplied.
+
+    Use only on endpoints that are intentionally public. Protected endpoints should
+    depend on get_current_user, which rejects missing or invalid credentials.
+    """
     if token is None:
         return None
 
