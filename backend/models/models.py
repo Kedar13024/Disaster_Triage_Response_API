@@ -21,11 +21,13 @@ class Incident(Base):
 
     Attributes:
         incident_id: Primary key of the incident.
-        incident_type: Category of the incident.
+        incident_category: Broad classification of the incident.
+        incident_type: Specific type of incident.
         description: Details supplied by the reporter.
         severity: Urgency level of the incident.
         published: Whether the incident is publicly visible.
         reported_at: Timestamp when the incident was created.
+        reported_by: ID of the user who reported the incident.
     """
 
     __tablename__ = "incidents"

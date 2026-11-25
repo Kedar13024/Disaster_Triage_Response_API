@@ -1,8 +1,11 @@
+"""Tests for incident creation, access control, filtering, and pagination."""
+
 from datetime import datetime
 from backend.models import models
 
 
 def test_create_incident(client, user_payload ):
+    """Verify an authenticated user can create an incident attributed to their account."""
     # 1. Register a user
     register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
@@ -48,6 +51,7 @@ def test_create_incident(client, user_payload ):
     assert "reported_at" in data
 
 def test_get_incident(client, user_payload):
+    """Verify an authenticated user can retrieve an incident by ID."""
 
     # Register
     register_response = client.post("/users", json=user_payload)
@@ -100,6 +104,7 @@ def test_get_incident(client, user_payload):
 
 
 def test_get_non_existent_incident(client, user_payload):
+    """Verify retrieving an unknown incident ID returns not found."""
 
     # Register
     register_response = client.post("/users", json=user_payload)
@@ -128,6 +133,7 @@ def test_get_non_existent_incident(client, user_payload):
     assert response.status_code == 404
 
 def test_update_incident(client, user_payload):
+    """Verify the incident owner can update their incident description."""
     # Register
     register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
@@ -180,6 +186,7 @@ def test_update_incident(client, user_payload):
     assert data["incident_type"] == "flood"
 
 def test_update_incident_by_non_owner(client, user_payload):
+    """Verify a non-owner cannot update another user's incident."""
     # Register User A (owner)
     register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
@@ -251,6 +258,7 @@ def test_update_incident_by_non_owner(client, user_payload):
     assert response.status_code == 403
 
 def test_delete_incident(client, user_payload):
+    """Verify the incident owner can delete their incident."""
     # Register
     register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
@@ -301,6 +309,7 @@ def test_delete_incident(client, user_payload):
     assert get_response.status_code == 404
 
 def test_delete_incident_by_non_owner(client, user_payload):
+    """Verify a non-owner cannot delete another user's incident."""
     # Register User A (owner)
     register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
@@ -375,6 +384,7 @@ def test_delete_incident_by_non_owner(client, user_payload):
     assert get_response.status_code == 200
 
 def test_update_incident_empty_payload(client, user_payload):
+    """Verify an empty update payload is rejected."""
     # Register
     register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
@@ -418,6 +428,7 @@ def test_update_incident_empty_payload(client, user_payload):
     assert response.status_code == 400
 
 def test_update_nonexistent_incident(client, user_payload):
+    """Verify updating an unknown incident ID returns not found."""
     # Register
     register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
@@ -445,6 +456,7 @@ def test_update_nonexistent_incident(client, user_payload):
     assert response.status_code == 404
 
 def test_delete_nonexistent_incident(client, user_payload):
+    """Verify deleting an unknown incident ID returns not found."""
     # Register
     register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
@@ -472,6 +484,7 @@ def test_delete_nonexistent_incident(client, user_payload):
 
 
 def test_incident_pagination_limit(client, user_payload):
+    """Verify the incident feed respects the requested page limit."""
     # Register user
     register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
@@ -513,6 +526,7 @@ def test_incident_pagination_limit(client, user_payload):
 
 
 def test_incident_pagination_offset(client, user_payload):
+    """Verify the incident feed skips the requested number of results."""
     # Register user
     register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
@@ -553,6 +567,7 @@ def test_incident_pagination_offset(client, user_payload):
     assert len(response.json()) == 2
 
 def test_incident_invalid_pagination(client):
+    """Verify invalid page limits and negative offsets are rejected."""
     # limit cannot be zero
     response = client.get("/incidents?limit=0")
     assert response.status_code == 422
@@ -566,6 +581,7 @@ def test_incident_invalid_pagination(client):
     assert response.status_code == 422
 
 def test_incident_filter_by_severity(client, db_session, user_payload):
+    """Verify the public feed filters incidents by severity."""
     # Register user
     register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
@@ -614,6 +630,7 @@ def test_incident_filter_by_severity(client, db_session, user_payload):
     )
 
 def test_incident_filter_by_category(client, user_payload):
+    """Verify the public feed filters incidents by category."""
     # Register user
     register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
@@ -669,6 +686,7 @@ def test_incident_filter_by_category(client, user_payload):
     )
 
 def test_incident_filter_by_type(client, user_payload):
+    """Verify the public feed filters incidents by type."""
     # Register user
     register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
@@ -718,6 +736,7 @@ def test_incident_filter_by_type(client, user_payload):
     )
 
 def test_incident_search(client, user_payload):
+    """Verify searching the public feed matches incident descriptions."""
     # Register user
     register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
@@ -771,6 +790,7 @@ def test_incident_search(client, user_payload):
     )
 
 def test_incident_search_case_insensitive(client, user_payload):
+    """Verify incident description search ignores letter case."""
     # Register user
     register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
@@ -813,6 +833,7 @@ def test_incident_search_case_insensitive(client, user_payload):
     assert "flood" in data[0]["description"].lower()
 
 def test_incident_search_with_whitespace(client, user_payload):
+    """Verify search terms are trimmed before matching descriptions."""
     # Register user
     register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
@@ -854,6 +875,7 @@ def test_incident_search_with_whitespace(client, user_payload):
     assert "flood" in data[0]["description"].lower()
 
 def test_incident_filter_by_start_date(client, db_session, user_payload):
+    """Verify the feed excludes incidents reported before the start date."""
     # Register user
     register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
@@ -910,6 +932,7 @@ def test_incident_filter_by_start_date(client, db_session, user_payload):
     )
 
 def test_incident_filter_by_end_date(client, db_session, user_payload):
+    """Verify the feed excludes incidents reported after the end date."""
     # Register user
     register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
@@ -965,6 +988,7 @@ def test_incident_filter_by_end_date(client, db_session, user_payload):
     )
 
 def test_incident_filter_by_date_range(client, db_session, user_payload):
+    """Verify the feed returns incidents within the requested date range."""
     register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
 
@@ -1016,6 +1040,7 @@ def test_incident_filter_by_date_range(client, db_session, user_payload):
     assert "January 10" in data[0]["description"]
 
 def test_incident_invalid_date_range(client):
+    """Verify a start date later than the end date is rejected."""
     response = client.get(
         "/incidents?start_date=2025-01-15T00:00:00"
         "&end_date=2025-01-10T00:00:00"
@@ -1027,6 +1052,7 @@ def test_incident_invalid_date_range(client):
     )
 
 def test_incident_sort_newest_first(client, db_session, user_payload):
+    """Verify the feed sorts incidents from newest to oldest."""
     register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
 
@@ -1077,6 +1103,7 @@ def test_incident_sort_newest_first(client, db_session, user_payload):
     assert data[2]["description"] == "Oldest incident."
 
 def test_incident_sort_oldest_first(client, db_session, user_payload):
+    """Verify the feed sorts incidents from oldest to newest."""
     register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
 
@@ -1127,6 +1154,7 @@ def test_incident_sort_oldest_first(client, db_session, user_payload):
     assert data[2]["description"] == "Newest incident."
 
 def test_incident_sort_by_severity(client, db_session, user_payload):
+    """Verify severity sorting orders critical incidents before low severity."""
     register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
 
@@ -1196,6 +1224,7 @@ def test_incident_sort_by_severity(client, db_session, user_payload):
     assert actual_order == expected_order
 
 def test_incident_search_only_whitespace(client):
+    """Verify a search containing only whitespace is rejected."""
     response = client.get("/incidents?search=%20%20%20")
 
     assert response.status_code == 422
@@ -1204,6 +1233,7 @@ def test_incident_search_only_whitespace(client):
     )
 
 def test_incident_search_exceeds_max_length(client):
+    """Verify search terms longer than the allowed maximum are rejected."""
     long_search = "a" * 201
 
     response = client.get(
@@ -1213,16 +1243,19 @@ def test_incident_search_exceeds_max_length(client):
     assert response.status_code == 422
 
 def test_incident_invalid_severity(client):
+    """Verify unsupported severity query values are rejected."""
     response = client.get("/incidents?severity=urgent")
 
     assert response.status_code == 422
 
 def test_incident_invalid_sort_option(client):
+    """Verify unsupported sort options are rejected."""
     response = client.get("/incidents?sort_by=popular")
 
     assert response.status_code == 422
 
 def test_incident_invalid_category(client):
+    """Verify unsupported incident categories are rejected."""
     response = client.get(
         "/incidents?incident_category=invalid_category"
     )
@@ -1230,6 +1263,7 @@ def test_incident_invalid_category(client):
     assert response.status_code == 422
 
 def test_incident_invalid_type(client):
+    """Verify unsupported incident types are rejected."""
     response = client.get(
         "/incidents?incident_type=invalid_type"
     )
@@ -1239,6 +1273,7 @@ def test_incident_invalid_type(client):
 def test_unpublished_incident_not_in_public_feed(
     client, db_session, user_payload
 ):
+    """Verify unpublished incidents are omitted from the public feed."""
     register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
 
@@ -1276,9 +1311,36 @@ def test_unpublished_incident_not_in_public_feed(
     assert data[0]["description"] == "Published flooding incident."
     assert all(incident["published"] for incident in data)
 
+def test_anonymous_user_can_view_published_incident(client, db_session, user_payload):
+    """Verify an anonymous request can retrieve a published incident by ID."""
+    # Register a reporter
+    response = client.post("/users", json=user_payload)
+    assert response.status_code == 201
+    user_id = response.json()["user_id"]
+
+    # Add a published incident
+    incident = models.Incident(
+        incident_category="natural_disaster",
+        incident_type="flood",
+        description="Published flooding incident report.",
+        reported_by=user_id,
+        published=True,
+    )
+    db_session.add(incident)
+    db_session.commit()
+    db_session.refresh(incident)
+
+    # No Authorization header: published detail should be public
+    response = client.get(f"/incidents/{incident.incident_id}")
+
+    assert response.status_code == 200
+    assert response.json()["incident_id"] == incident.incident_id
+    assert response.json()["published"] is True
+
 def test_owner_can_view_unpublished_incident(
     client, db_session, user_payload
 ):
+    """Verify an incident owner can retrieve their unpublished incident."""
     # Register user
     register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
@@ -1327,6 +1389,7 @@ def test_owner_can_view_unpublished_incident(
 def test_non_owner_cannot_view_unpublished_incident(
     client, db_session, user_payload
 ):
+    """Verify a non-owner is denied access to an unpublished incident."""
     # Register owner
     owner_response = client.post("/users", json=user_payload)
     assert owner_response.status_code == 201
@@ -1376,11 +1439,12 @@ def test_non_owner_cannot_view_unpublished_incident(
         headers=headers,
     )
 
-    assert response.status_code == 404
+    assert response.status_code == 403
 
 def test_pagination_excludes_unpublished_incidents(
     client, db_session, user_payload
 ):
+    """Verify pagination results contain only published incidents."""
     register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
 

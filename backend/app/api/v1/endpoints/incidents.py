@@ -30,7 +30,7 @@ def get_incidents(
     search: str | None = Query(default=None, min_length=1, max_length=200),
     sort_by: Literal["newest", "oldest", "severity"] = Query(default="newest")
     ):
-    """Return paginated published incidents."""
+    """Return published incidents with pagination and optional filters and sorting."""
 
     query = db.query(models.Incident).filter(models.Incident.published.is_(True))
 
@@ -134,6 +134,7 @@ def get_incident(
     db: Session = Depends(get_db),
     current_user: models.User | None = Depends(get_optional_current_user),
 ):
+    """Return a published incident publicly, or an unpublished one to its owner/admin."""
     incident = (
         db.query(models.Incident)
         .filter(models.Incident.incident_id == incident_id)
@@ -171,7 +172,7 @@ def create_incident(incident: IncidentCreate , db : Session = Depends(get_db),  
 
 @router.patch("/{incident_id}", response_model=IncidentResponse )
 def update_incident(incident_id: int, incident: IncidentUpdate , db : Session = Depends(get_db) , current_user : models.User = Depends(get_current_user)):
-    """Apply supplied changes to an incident owned by the authenticated user."""
+    """Apply supplied changes when the authenticated user owns the incident or is an admin."""
 
     old_incident = db.query(models.Incident).filter(
         models.Incident.incident_id == incident_id
@@ -210,7 +211,7 @@ def update_incident(incident_id: int, incident: IncidentUpdate , db : Session = 
 
 @router.delete("/{incident_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_incident(incident_id: int , db : Session = Depends(get_db), current_user : models.User = Depends(get_current_user)):
-    """Delete a incident when the user owns it or is an administrator."""
+    """Delete an incident when the authenticated user owns it or is an admin."""
     incident = db.query(models.Incident).filter(
         models.Incident.incident_id == incident_id,
     ).first()
