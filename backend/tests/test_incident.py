@@ -1,6 +1,4 @@
 from datetime import datetime
-import json
-
 from backend.models import models
 
 
@@ -1196,3 +1194,233 @@ def test_incident_sort_by_severity(client, db_session, user_payload):
     ]
 
     assert actual_order == expected_order
+
+def test_incident_search_only_whitespace(client):
+    response = client.get("/incidents/?search=%20%20%20")
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == (
+        "Search cannot contain only whitespace."
+    )
+
+def test_incident_search_exceeds_max_length(client):
+    long_search = "a" * 201
+
+    response = client.get(
+        f"/incidents/?search={long_search}"
+    )
+
+    assert response.status_code == 422
+
+def test_incident_invalid_severity(client):
+    response = client.get("/incidents/?severity=urgent")
+
+    assert response.status_code == 422
+
+def test_incident_invalid_sort_option(client):
+    response = client.get("/incidents/?sort_by=popular")
+
+    assert response.status_code == 422
+
+def test_incident_invalid_category(client):
+    response = client.get(
+        "/incidents/?incident_category=invalid_category"
+    )
+
+    assert response.status_code == 422
+
+def test_incident_invalid_type(client):
+    response = client.get(
+        "/incidents/?incident_type=invalid_type"
+    )
+
+    assert response.status_code == 422
+
+def test_unpublished_incident_not_in_public_feed(
+    client, db_session, user_payload
+):
+    register_response = client.post("/users/", json=user_payload)
+    assert register_response.status_code == 201
+
+    user_id = register_response.json()["user_id"]
+
+    incidents = [
+        models.Incident(
+            incident_category="natural_disaster",
+            incident_type="flood",
+            description="Published flooding incident.",
+            severity="high",
+            reported_by=user_id,
+            published=True,
+        ),
+        models.Incident(
+            incident_category="natural_disaster",
+            incident_type="flood",
+            description="Unpublished flooding incident.",
+            severity="high",
+            reported_by=user_id,
+            published=False,
+        ),
+    ]
+
+    db_session.add_all(incidents)
+    db_session.commit()
+
+    response = client.get("/incidents/")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 1
+    assert data[0]["description"] == "Published flooding incident."
+    assert all(incident["published"] for incident in data)
+
+def test_owner_can_view_unpublished_incident(
+    client, db_session, user_payload
+):
+    # Register user
+    register_response = client.post("/users/", json=user_payload)
+    assert register_response.status_code == 201
+
+    user_id = register_response.json()["user_id"]
+
+    # Login
+    login_response = client.post(
+        "/login/",
+        data={
+            "username": user_payload["user_email"],
+            "password": user_payload["user_password"],
+        },
+    )
+    assert login_response.status_code == 200
+
+    token = login_response.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # Insert unpublished incident
+    incident = models.Incident(
+        incident_category="natural_disaster",
+        incident_type="flood",
+        description="My unpublished flooding incident.",
+        severity="high",
+        reported_by=user_id,
+        published=False,
+    )
+
+    db_session.add(incident)
+    db_session.commit()
+    db_session.refresh(incident)
+
+    # Owner requests their incident
+    response = client.get(
+        f"/incidents/{incident.incident_id}",
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    assert response.json()["published"] is False
+    assert response.json()["description"] == (
+        "My unpublished flooding incident."
+    )
+
+def test_non_owner_cannot_view_unpublished_incident(
+    client, db_session, user_payload
+):
+    # Register owner
+    owner_response = client.post("/users/", json=user_payload)
+    assert owner_response.status_code == 201
+
+    owner_id = owner_response.json()["user_id"]
+
+    # Register another user
+    other_user_payload = user_payload.copy()
+    other_user_payload["user_email"] = "another@example.com"
+    other_user_payload["user_phoneno"] = "+919876543211"
+
+    other_response = client.post(
+        "/users/", json=other_user_payload
+    )
+    assert other_response.status_code == 201
+
+    # Login as the other user
+    login_response = client.post(
+        "/login/",
+        data={
+            "username": other_user_payload["user_email"],
+            "password": other_user_payload["user_password"],
+        },
+    )
+    assert login_response.status_code == 200
+
+    token = login_response.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # Create unpublished incident belonging to owner
+    incident = models.Incident(
+        incident_category="natural_disaster",
+        incident_type="flood",
+        description="Private unpublished flooding incident.",
+        severity="high",
+        reported_by=owner_id,
+        published=False,
+    )
+
+    db_session.add(incident)
+    db_session.commit()
+    db_session.refresh(incident)
+
+    # Other user attempts to access it
+    response = client.get(
+        f"/incidents/{incident.incident_id}",
+        headers=headers,
+    )
+
+    assert response.status_code == 404
+
+def test_pagination_excludes_unpublished_incidents(
+    client, db_session, user_payload
+):
+    register_response = client.post("/users/", json=user_payload)
+    assert register_response.status_code == 201
+
+    user_id = register_response.json()["user_id"]
+
+    incidents = [
+        models.Incident(
+            incident_category="natural_disaster",
+            incident_type="flood",
+            description="Published incident one.",
+            severity="low",
+            reported_by=user_id,
+            published=True,
+        ),
+        models.Incident(
+            incident_category="natural_disaster",
+            incident_type="flood",
+            description="Unpublished incident.",
+            severity="high",
+            reported_by=user_id,
+            published=False,
+        ),
+        models.Incident(
+            incident_category="natural_disaster",
+            incident_type="flood",
+            description="Published incident two.",
+            severity="medium",
+            reported_by=user_id,
+            published=True,
+        ),
+    ]
+
+    db_session.add_all(incidents)
+    db_session.commit()
+
+    response = client.get("/incidents/?limit=10&skip=0")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 2
+    assert all(incident["published"] for incident in data)
