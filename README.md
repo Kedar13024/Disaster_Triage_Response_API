@@ -1,6 +1,6 @@
 # Disaster Triage Response API
 
-A FastAPI backend for registering users and reporting and managing disaster incidents. The API stores users and incidents in PostgreSQL using SQLAlchemy, with Alembic migrations. Authenticated users can report incidents, view published incidents, and manage incidents they reported.
+A FastAPI backend for registering users and reporting and managing disaster incidents. The API stores users and incidents in PostgreSQL using SQLAlchemy, with Alembic migrations. Anyone can browse published incidents. Authenticated users can report incidents and manage their own reports; administrators can also manage incidents and look up user profiles.
 
 > This is a learning and portfolio project. It is not a certified emergency dispatch or life-safety service.
 
@@ -9,7 +9,8 @@ A FastAPI backend for registering users and reporting and managing disaster inci
 - User registration with email, phone number, and password.
 - Password hashing before credentials are stored.
 - OAuth2 password-form login that returns a JWT bearer token.
-- Role-aware user access for citizens, responders, and administrators.
+- Incident updates and deletes are available to the reporter or an administrator.
+- Administrator-only user profile lookup.
 - Incident creation, listing, retrieval, updating, and deletion.
 - PostgreSQL persistence and Alembic database migrations.
 - Interactive API documentation from FastAPI.
@@ -60,25 +61,41 @@ The service is available at <http://127.0.0.1:8000>. Interactive API docs are at
 
 ## API routes
 
-All incident routes require a valid bearer token. The user lookup route also requires the administrator role.
+Published incident reads and user registration are public. Incident creation, the current user's incident list, updates, and deletes require a valid bearer token. Reporters and administrators can update or delete an incident; only administrators can look up user profiles. The public read endpoints ignore missing or invalid bearer credentials.
 
 | Method | Path | Authentication | Purpose |
 | --- | --- | --- | --- |
 | `GET` | `/home` | None | Return a welcome message |
-| `POST` | `/users/` | None | Register a citizen account |
+| `POST` | `/users` | None | Register a citizen account |
 | `GET` | `/users/{user_id}` | Admin | Get a user's public profile |
-| `POST` | `/login/` | Form credentials | Verify credentials and return an access token |
-| `GET` | `/incidents/` | Bearer token | List published incidents |
-| `GET` | `/incidents/{incident_id}` | Bearer token | Get a published incident |
-| `POST` | `/incidents/` | Bearer token | Report an incident as the current user |
-| `PATCH` | `/incidents/{incident_id}` | Bearer token | Update an incident reported by the current user |
+| `POST` | `/login` | Form credentials | Verify credentials and return an access token |
+| `GET` | `/incidents` | None | List published incidents; supports filters, pagination, and sorting |
+| `GET` | `/incidents/{incident_id}` | None | Get a published incident; unpublished reports are visible to their owner or an admin |
+| `GET` | `/incidents/my` | Bearer token | List incidents reported by the current user, including unpublished reports |
+| `POST` | `/incidents` | Bearer token | Report an incident as the current user |
+| `PATCH` | `/incidents/{incident_id}` | Bearer token | Update an incident reported by the current user or an admin |
 | `DELETE` | `/incidents/{incident_id}` | Bearer token | Delete an incident reported by the current user or by an admin |
 
-The current implementation returns `404` when an incident cannot be found. Listing incidents also returns `404` when there are no published incidents. Updates return `400` if no fields are provided and `403` if the current user does not own the incident.
+Use the slashless collection paths shown above (for example, `/incidents`). FastAPI redirects collection requests that include a trailing slash. The incident feed returns `200` with an empty array when no reports match. Incident detail returns `404` for an unknown ID and `403` when the caller cannot view an unpublished report. Updates return `400` for an empty update body, `404` for an unknown incident, and `403` when the caller is neither the reporter nor an admin.
+
+The incident feed accepts these optional query parameters:
+
+| Parameter | Values or format | Default |
+| --- | --- | --- |
+| `limit` | Integer from 1 to 100 | `20` |
+| `skip` | Non-negative integer | `0` |
+| `severity` | `low`, `medium`, `high`, `critical` | No filter |
+| `incident_category` | One of the supported category values | No filter |
+| `incident_type` | One of the supported incident type values | No filter |
+| `start_date`, `end_date` | ISO datetime | No date bound |
+| `search` | 1-200 characters; searches descriptions | No filter |
+| `sort_by` | `newest`, `oldest`, `severity` | `newest` |
+
+For example: `GET /incidents?severity=high&sort_by=newest&limit=10`.
 
 ## Authentication
 
-Register an account with `POST /users/` using JSON:
+Register an account with `POST /users` using JSON:
 
 ```json
 {
@@ -89,7 +106,7 @@ Register an account with `POST /users/` using JSON:
 }
 ```
 
-New accounts receive the `citizen` role. Login at `POST /login/` using form fields named `username` (the account email) and `password`. The response contains an access token and token type:
+New accounts receive the `citizen` role. Login at `POST /login` using form-encoded fields named `username` (the account email) and `password`. The response contains an access token and token type:
 
 ```json
 {
@@ -105,20 +122,31 @@ In Swagger UI, use **Authorize** and enter the token as a bearer credential. For
 Authorization: Bearer <access-token>
 ```
 
+Newly registered accounts always receive the `citizen` role; the registration endpoint does not accept a requested role.
+
 ## Reporting an incident
 
-Send `POST /incidents/` with a bearer token and JSON body:
+Send `POST /incidents` with a bearer token and JSON body:
 
 ```json
 {
-  "incident_type": "Flood",
-  "description": "Rising water reported near the east bridge.",
-  "severity": "low",
-  "published": true
+  "incident_category": "natural_disaster",
+  "incident_type": "flood",
+  "description": "Rising water reported near the east bridge."
 }
 ```
 
-The API assigns the incident ID, report timestamp, and reporter from the authenticated account. The response also includes the reporter's public profile. `severity` defaults to `low` and `published` defaults to `true` if omitted.
+The API assigns the incident ID, report timestamp, reporter, default severity (`low`), and default published state (`true`). The response includes the reporter's public profile, including their email address. The create request accepts only the three fields shown; severity and publication state cannot be set through this endpoint.
+
+## Tests
+
+The tests use PostgreSQL and connect to a database named `dtr_db_test` using the database credentials in `.env`. Run them with:
+
+```powershell
+pytest
+```
+
+The test fixture creates and drops the tables in `dtr_db_test`. Use a disposable test database and do not point this setting at a database containing data you need to keep.
 
 ## Project structure
 
@@ -134,10 +162,10 @@ backend/alembic/                Database migration environment and revisions
 
 ## Current limitations
 
-- The API currently has no pagination or filtering for incident lists.
-- Incident severity is represented as a string, and the API does not yet implement a responder assignment or incident status workflow.
-- The API currently exposes only published incidents through the list and detail routes.
+- Incident severity is stored as a string, and the API does not yet implement responder assignment or an incident status workflow.
+- Public incident responses include the reporter profile, including email; review this exposure before deployment.
 - Authentication uses bearer access tokens; there is no refresh-token or account recovery flow.
-- Review the migrations and database schema together before using an existing database, because migration history may not fully match the current ORM models.
+- Incident category and type are not checked as a pair, so they can describe inconsistent classifications.
+- The `responder` role exists, but no endpoint currently grants it distinct permissions.
 
 For local development and portfolio demonstration, use sample data and a non-production database. Before any public deployment, review authorization, configuration and secrets, migrations, backups, logging, validation, and operational monitoring.

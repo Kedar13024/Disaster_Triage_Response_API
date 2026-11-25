@@ -1,6 +1,7 @@
-# tests/test_users.py
+"""Tests for user registration and request validation."""
 
 def test_create_user(client , user_payload):
+    """Verify registration returns a citizen profile without its password."""
 
     response = client.post("/users", json=user_payload)
 
@@ -15,6 +16,7 @@ def test_create_user(client , user_payload):
     assert "user_password" not in data
 
 def test_duplicate_user_registration(client , user_payload):
+    """Verify registering an existing email returns a conflict response."""
 
     first_response = client.post("/users", json=user_payload)
 
@@ -28,6 +30,7 @@ def test_duplicate_user_registration(client , user_payload):
     )
 
 def test_registration_invalid_email(client, user_payload):
+    """Verify registration rejects an invalid email address."""
 
     payload = user_payload.copy()
     payload["user_email"] = "not-an-email"

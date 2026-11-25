@@ -1,4 +1,4 @@
-# tests/conftest.py
+"""Shared database, client, and payload fixtures for API tests."""
 
 import pytest
 from sqlalchemy.orm import sessionmaker
@@ -33,6 +33,7 @@ TestingSessionLocal = sessionmaker(
 
 @pytest.fixture
 def db_session():
+    """Create the test schema and yield a database session, then clean up."""
     Base.metadata.create_all(bind=test_engine)
 
     db = TestingSessionLocal()
@@ -46,6 +47,7 @@ def db_session():
 
 @pytest.fixture
 def client(db_session):
+    """Provide a TestClient with database access overridden to the test session."""
 
     def override_get_db():
         yield db_session
@@ -61,6 +63,7 @@ def client(db_session):
 
 @pytest.fixture
 def user_payload():
+    """Return valid registration data for a test citizen account."""
     return {
         "user_fullname": "Test Citizen",
         "user_phoneno": "+919876543210",

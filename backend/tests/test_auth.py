@@ -1,5 +1,8 @@
+"""Tests for login and authenticated endpoint access."""
+
 
 def test_login_success(client, user_payload):
+    """Verify valid credentials return a bearer token and the user's role."""
 
     # Register a user first
     register_response = client.post("/users", json=user_payload)
@@ -25,6 +28,7 @@ def test_login_success(client, user_payload):
     assert data["access_token"] != ""
 
 def test_login_wrong_password(client, user_payload):
+    """Verify login rejects an incorrect password."""
 
     # Register user
     register_response = client.post("/users", json=user_payload)
@@ -45,6 +49,7 @@ def test_login_wrong_password(client, user_payload):
 
 
 def test_login_wrong_email(client, user_payload):
+    """Verify login rejects an email that is not registered."""
 
     # Register user
     register_response = client.post("/users", json=user_payload)
@@ -65,12 +70,14 @@ def test_login_wrong_email(client, user_payload):
 
 
 def test_access_protected_endpoint_without_token(client):
+    """Verify protected incident endpoints reject requests without a token."""
 
     response = client.get("/incidents/my")
 
     assert response.status_code == 401
 
 def test_access_protected_endpoint_with_token(client, user_payload):
+    """Verify a valid bearer token grants access to the user's incident list."""
 
     # Register user
     register_response = client.post("/users", json=user_payload)
