@@ -79,7 +79,7 @@ def test_access_protected_endpoint_with_token(client, user_payload):
 
     # Login
     login_response = client.post(
-        "/login/",
+        "/login",
         data={
             "username": user_payload["user_email"],
             "password": user_payload["user_password"],

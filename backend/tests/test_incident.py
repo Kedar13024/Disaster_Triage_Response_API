@@ -30,7 +30,7 @@ def test_create_incident(client, user_payload ):
     }
 
     response = client.post(
-        "/incidents/",
+        "/incidents",
         json=incident_payload,
         headers=headers,
     )
@@ -55,7 +55,7 @@ def test_get_incident(client, user_payload):
 
     # Login
     login_response = client.post(
-        "/login/",
+        "/login",
         data={
             "username": user_payload["user_email"],
             "password": user_payload["user_password"],
@@ -74,7 +74,7 @@ def test_get_incident(client, user_payload):
     }
 
     create_response = client.post(
-        "/incidents/",
+        "/incidents",
         json=incident_payload,
         headers=headers,
     )
@@ -129,12 +129,12 @@ def test_get_non_existent_incident(client, user_payload):
 
 def test_update_incident(client, user_payload):
     # Register
-    register_response = client.post("/users/", json=user_payload)
+    register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
 
     # Login
     login_response = client.post(
-        "/login/",
+        "/login",
         data={
             "username": user_payload["user_email"],
             "password": user_payload["user_password"],
@@ -153,7 +153,7 @@ def test_update_incident(client, user_payload):
     }
 
     create_response = client.post(
-        "/incidents/",
+        "/incidents",
         json=incident_payload,
         headers=headers,
     )
@@ -181,12 +181,12 @@ def test_update_incident(client, user_payload):
 
 def test_update_incident_by_non_owner(client, user_payload):
     # Register User A (owner)
-    register_response = client.post("/users/", json=user_payload)
+    register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
 
     # Login User A
     login_response = client.post(
-        "/login/",
+        "/login",
         data={
             "username": user_payload["user_email"],
             "password": user_payload["user_password"],
@@ -205,7 +205,7 @@ def test_update_incident_by_non_owner(client, user_payload):
     }
 
     create_response = client.post(
-        "/incidents/",
+        "/incidents",
         json=incident_payload,
         headers=owner_headers,
     )
@@ -219,14 +219,14 @@ def test_update_incident_by_non_owner(client, user_payload):
     second_user["user_phoneno"] = "+919876543211"
 
     second_register_response = client.post(
-        "/users/",
+        "/users",
         json=second_user,
     )
     assert second_register_response.status_code == 201
 
     # Login User B
     second_login_response = client.post(
-        "/login/",
+        "/login",
         data={
             "username": second_user["user_email"],
             "password": second_user["user_password"],
@@ -252,12 +252,12 @@ def test_update_incident_by_non_owner(client, user_payload):
 
 def test_delete_incident(client, user_payload):
     # Register
-    register_response = client.post("/users/", json=user_payload)
+    register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
 
     # Login
     login_response = client.post(
-        "/login/",
+        "/login",
         data={
             "username": user_payload["user_email"],
             "password": user_payload["user_password"],
@@ -276,7 +276,7 @@ def test_delete_incident(client, user_payload):
     }
 
     create_response = client.post(
-        "/incidents/",
+        "/incidents",
         json=incident_payload,
         headers=headers,
     )
@@ -302,12 +302,12 @@ def test_delete_incident(client, user_payload):
 
 def test_delete_incident_by_non_owner(client, user_payload):
     # Register User A (owner)
-    register_response = client.post("/users/", json=user_payload)
+    register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
 
     # Login User A
     login_response = client.post(
-        "/login/",
+        "/login",
         data={
             "username": user_payload["user_email"],
             "password": user_payload["user_password"],
@@ -326,7 +326,7 @@ def test_delete_incident_by_non_owner(client, user_payload):
     }
 
     create_response = client.post(
-        "/incidents/",
+        "/incidents",
         json=incident_payload,
         headers=owner_headers,
     )
@@ -340,14 +340,14 @@ def test_delete_incident_by_non_owner(client, user_payload):
     second_user["user_phoneno"] = "+919876543211"
 
     second_register_response = client.post(
-        "/users/",
+        "/users",
         json=second_user,
     )
     assert second_register_response.status_code == 201
 
     # Login User B
     second_login_response = client.post(
-        "/login/",
+        "/login",
         data={
             "username": second_user["user_email"],
             "password": second_user["user_password"],
@@ -376,12 +376,12 @@ def test_delete_incident_by_non_owner(client, user_payload):
 
 def test_update_incident_empty_payload(client, user_payload):
     # Register
-    register_response = client.post("/users/", json=user_payload)
+    register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
 
     # Login
     login_response = client.post(
-        "/login/",
+        "/login",
         data={
             "username": user_payload["user_email"],
             "password": user_payload["user_password"],
@@ -400,7 +400,7 @@ def test_update_incident_empty_payload(client, user_payload):
     }
 
     create_response = client.post(
-        "/incidents/",
+        "/incidents",
         json=incident_payload,
         headers=headers,
     )
@@ -419,12 +419,12 @@ def test_update_incident_empty_payload(client, user_payload):
 
 def test_update_nonexistent_incident(client, user_payload):
     # Register
-    register_response = client.post("/users/", json=user_payload)
+    register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
 
     # Login
     login_response = client.post(
-        "/login/",
+        "/login",
         data={
             "username": user_payload["user_email"],
             "password": user_payload["user_password"],
@@ -446,12 +446,12 @@ def test_update_nonexistent_incident(client, user_payload):
 
 def test_delete_nonexistent_incident(client, user_payload):
     # Register
-    register_response = client.post("/users/", json=user_payload)
+    register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
 
     # Login
     login_response = client.post(
-        "/login/",
+        "/login",
         data={
             "username": user_payload["user_email"],
             "password": user_payload["user_password"],
@@ -473,12 +473,12 @@ def test_delete_nonexistent_incident(client, user_payload):
 
 def test_incident_pagination_limit(client, user_payload):
     # Register user
-    register_response = client.post("/users/", json=user_payload)
+    register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
 
     # Login
     login_response = client.post(
-        "/login/",
+        "/login",
         data={
             "username": user_payload["user_email"],
             "password": user_payload["user_password"],
@@ -498,7 +498,7 @@ def test_incident_pagination_limit(client, user_payload):
         }
 
         create_response = client.post(
-            "/incidents/",
+            "/incidents",
             json=incident_payload,
             headers=headers,
         )
@@ -519,7 +519,7 @@ def test_incident_pagination_offset(client, user_payload):
 
     # Login
     login_response = client.post(
-        "/login/",
+        "/login",
         data={
             "username": user_payload["user_email"],
             "password": user_payload["user_password"],
@@ -567,7 +567,7 @@ def test_incident_invalid_pagination(client):
 
 def test_incident_filter_by_severity(client, db_session, user_payload):
     # Register user
-    register_response = client.post("/users/", json=user_payload)
+    register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
 
     user_id = register_response.json()["user_id"]
@@ -601,7 +601,7 @@ def test_incident_filter_by_severity(client, db_session, user_payload):
     db_session.commit()
 
     # Request only high-severity incidents
-    response = client.get("/incidents/?severity=high")
+    response = client.get("/incidents?severity=high")
 
     assert response.status_code == 200
 
@@ -615,12 +615,12 @@ def test_incident_filter_by_severity(client, db_session, user_payload):
 
 def test_incident_filter_by_category(client, user_payload):
     # Register user
-    register_response = client.post("/users/", json=user_payload)
+    register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
 
     # Login
     login_response = client.post(
-        "/login/",
+        "/login",
         data={
             "username": user_payload["user_email"],
             "password": user_payload["user_password"],
@@ -646,7 +646,7 @@ def test_incident_filter_by_category(client, user_payload):
         }
 
         create_response = client.post(
-            "/incidents/",
+            "/incidents",
             json=incident_payload,
             headers=headers,
         )
@@ -655,7 +655,7 @@ def test_incident_filter_by_category(client, user_payload):
 
     # Request only natural disaster incidents
     response = client.get(
-        "/incidents/?incident_category=natural_disaster"
+        "/incidents?incident_category=natural_disaster"
     )
 
     assert response.status_code == 200
@@ -670,12 +670,12 @@ def test_incident_filter_by_category(client, user_payload):
 
 def test_incident_filter_by_type(client, user_payload):
     # Register user
-    register_response = client.post("/users/", json=user_payload)
+    register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
 
     # Login
     login_response = client.post(
-        "/login/",
+        "/login",
         data={
             "username": user_payload["user_email"],
             "password": user_payload["user_password"],
@@ -697,7 +697,7 @@ def test_incident_filter_by_type(client, user_payload):
         }
 
         create_response = client.post(
-            "/incidents/",
+            "/incidents",
             json=incident_payload,
             headers=headers,
         )
@@ -705,7 +705,7 @@ def test_incident_filter_by_type(client, user_payload):
         assert create_response.status_code == 201
 
     # Request only flood incidents
-    response = client.get("/incidents/?incident_type=flood")
+    response = client.get("/incidents?incident_type=flood")
 
     assert response.status_code == 200
 
@@ -719,12 +719,12 @@ def test_incident_filter_by_type(client, user_payload):
 
 def test_incident_search(client, user_payload):
     # Register user
-    register_response = client.post("/users/", json=user_payload)
+    register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
 
     # Login
     login_response = client.post(
-        "/login/",
+        "/login",
         data={
             "username": user_payload["user_email"],
             "password": user_payload["user_password"],
@@ -750,7 +750,7 @@ def test_incident_search(client, user_payload):
         }
 
         create_response = client.post(
-            "/incidents/",
+            "/incidents",
             json=incident_payload,
             headers=headers,
         )
@@ -758,7 +758,7 @@ def test_incident_search(client, user_payload):
         assert create_response.status_code == 201
 
     # Search for flooding
-    response = client.get("/incidents/?search=flood")
+    response = client.get("/incidents?search=flood")
 
     assert response.status_code == 200
 
@@ -772,12 +772,12 @@ def test_incident_search(client, user_payload):
 
 def test_incident_search_case_insensitive(client, user_payload):
     # Register user
-    register_response = client.post("/users/", json=user_payload)
+    register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
 
     # Login
     login_response = client.post(
-        "/login/",
+        "/login",
         data={
             "username": user_payload["user_email"],
             "password": user_payload["user_password"],
@@ -796,14 +796,14 @@ def test_incident_search_case_insensitive(client, user_payload):
     }
 
     create_response = client.post(
-        "/incidents/",
+        "/incidents",
         json=incident_payload,
         headers=headers,
     )
     assert create_response.status_code == 201
 
     # Search using uppercase letters
-    response = client.get("/incidents/?search=FLOOD")
+    response = client.get("/incidents?search=FLOOD")
 
     assert response.status_code == 200
 
@@ -814,12 +814,12 @@ def test_incident_search_case_insensitive(client, user_payload):
 
 def test_incident_search_with_whitespace(client, user_payload):
     # Register user
-    register_response = client.post("/users/", json=user_payload)
+    register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
 
     # Login
     login_response = client.post(
-        "/login/",
+        "/login",
         data={
             "username": user_payload["user_email"],
             "password": user_payload["user_password"],
@@ -838,14 +838,14 @@ def test_incident_search_with_whitespace(client, user_payload):
     }
 
     create_response = client.post(
-        "/incidents/",
+        "/incidents",
         json=incident_payload,
         headers=headers,
     )
     assert create_response.status_code == 201
 
     # Search with spaces around the word
-    response = client.get("/incidents/?search=%20flood%20")
+    response = client.get("/incidents?search=%20flood%20")
 
     assert response.status_code == 200
     data = response.json()
@@ -855,7 +855,7 @@ def test_incident_search_with_whitespace(client, user_payload):
 
 def test_incident_filter_by_start_date(client, db_session, user_payload):
     # Register user
-    register_response = client.post("/users/", json=user_payload)
+    register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
 
     user_id = register_response.json()["user_id"]
@@ -896,7 +896,7 @@ def test_incident_filter_by_start_date(client, db_session, user_payload):
 
     # Search from January 10 onwards
     response = client.get(
-        "/incidents/?start_date=2025-01-10T00:00:00"
+        "/incidents?start_date=2025-01-10T00:00:00"
     )
 
     assert response.status_code == 200
@@ -911,7 +911,7 @@ def test_incident_filter_by_start_date(client, db_session, user_payload):
 
 def test_incident_filter_by_end_date(client, db_session, user_payload):
     # Register user
-    register_response = client.post("/users/", json=user_payload)
+    register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
 
     user_id = register_response.json()["user_id"]
@@ -951,7 +951,7 @@ def test_incident_filter_by_end_date(client, db_session, user_payload):
 
     # Search up to January 10
     response = client.get(
-        "/incidents/?end_date=2025-01-10T23:59:59"
+        "/incidents?end_date=2025-01-10T23:59:59"
     )
 
     assert response.status_code == 200
@@ -965,7 +965,7 @@ def test_incident_filter_by_end_date(client, db_session, user_payload):
     )
 
 def test_incident_filter_by_date_range(client, db_session, user_payload):
-    register_response = client.post("/users/", json=user_payload)
+    register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
 
     user_id = register_response.json()["user_id"]
@@ -1004,7 +1004,7 @@ def test_incident_filter_by_date_range(client, db_session, user_payload):
     db_session.commit()
 
     response = client.get(
-        "/incidents/?start_date=2025-01-08T00:00:00"
+        "/incidents?start_date=2025-01-08T00:00:00"
         "&end_date=2025-01-12T23:59:59"
     )
 
@@ -1017,7 +1017,7 @@ def test_incident_filter_by_date_range(client, db_session, user_payload):
 
 def test_incident_invalid_date_range(client):
     response = client.get(
-        "/incidents/?start_date=2025-01-15T00:00:00"
+        "/incidents?start_date=2025-01-15T00:00:00"
         "&end_date=2025-01-10T00:00:00"
     )
 
@@ -1027,7 +1027,7 @@ def test_incident_invalid_date_range(client):
     )
 
 def test_incident_sort_newest_first(client, db_session, user_payload):
-    register_response = client.post("/users/", json=user_payload)
+    register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
 
     user_id = register_response.json()["user_id"]
@@ -1065,7 +1065,7 @@ def test_incident_sort_newest_first(client, db_session, user_payload):
     db_session.add_all(incidents)
     db_session.commit()
 
-    response = client.get("/incidents/?sort_by=newest")
+    response = client.get("/incidents?sort_by=newest")
 
     assert response.status_code == 200
 
@@ -1077,7 +1077,7 @@ def test_incident_sort_newest_first(client, db_session, user_payload):
     assert data[2]["description"] == "Oldest incident."
 
 def test_incident_sort_oldest_first(client, db_session, user_payload):
-    register_response = client.post("/users/", json=user_payload)
+    register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
 
     user_id = register_response.json()["user_id"]
@@ -1115,7 +1115,7 @@ def test_incident_sort_oldest_first(client, db_session, user_payload):
     db_session.add_all(incidents)
     db_session.commit()
 
-    response = client.get("/incidents/?sort_by=oldest")
+    response = client.get("/incidents?sort_by=oldest")
 
     assert response.status_code == 200
 
@@ -1127,7 +1127,7 @@ def test_incident_sort_oldest_first(client, db_session, user_payload):
     assert data[2]["description"] == "Newest incident."
 
 def test_incident_sort_by_severity(client, db_session, user_payload):
-    register_response = client.post("/users/", json=user_payload)
+    register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
 
     user_id = register_response.json()["user_id"]
@@ -1174,7 +1174,7 @@ def test_incident_sort_by_severity(client, db_session, user_payload):
     db_session.add_all(incidents)
     db_session.commit()
 
-    response = client.get("/incidents/?sort_by=severity")
+    response = client.get("/incidents?sort_by=severity")
 
     assert response.status_code == 200
 
@@ -1196,7 +1196,7 @@ def test_incident_sort_by_severity(client, db_session, user_payload):
     assert actual_order == expected_order
 
 def test_incident_search_only_whitespace(client):
-    response = client.get("/incidents/?search=%20%20%20")
+    response = client.get("/incidents?search=%20%20%20")
 
     assert response.status_code == 422
     assert response.json()["detail"] == (
@@ -1207,31 +1207,31 @@ def test_incident_search_exceeds_max_length(client):
     long_search = "a" * 201
 
     response = client.get(
-        f"/incidents/?search={long_search}"
+        f"/incidents?search={long_search}"
     )
 
     assert response.status_code == 422
 
 def test_incident_invalid_severity(client):
-    response = client.get("/incidents/?severity=urgent")
+    response = client.get("/incidents?severity=urgent")
 
     assert response.status_code == 422
 
 def test_incident_invalid_sort_option(client):
-    response = client.get("/incidents/?sort_by=popular")
+    response = client.get("/incidents?sort_by=popular")
 
     assert response.status_code == 422
 
 def test_incident_invalid_category(client):
     response = client.get(
-        "/incidents/?incident_category=invalid_category"
+        "/incidents?incident_category=invalid_category"
     )
 
     assert response.status_code == 422
 
 def test_incident_invalid_type(client):
     response = client.get(
-        "/incidents/?incident_type=invalid_type"
+        "/incidents?incident_type=invalid_type"
     )
 
     assert response.status_code == 422
@@ -1239,7 +1239,7 @@ def test_incident_invalid_type(client):
 def test_unpublished_incident_not_in_public_feed(
     client, db_session, user_payload
 ):
-    register_response = client.post("/users/", json=user_payload)
+    register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
 
     user_id = register_response.json()["user_id"]
@@ -1266,7 +1266,7 @@ def test_unpublished_incident_not_in_public_feed(
     db_session.add_all(incidents)
     db_session.commit()
 
-    response = client.get("/incidents/")
+    response = client.get("/incidents")
 
     assert response.status_code == 200
 
@@ -1280,14 +1280,14 @@ def test_owner_can_view_unpublished_incident(
     client, db_session, user_payload
 ):
     # Register user
-    register_response = client.post("/users/", json=user_payload)
+    register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
 
     user_id = register_response.json()["user_id"]
 
     # Login
     login_response = client.post(
-        "/login/",
+        "/login",
         data={
             "username": user_payload["user_email"],
             "password": user_payload["user_password"],
@@ -1328,7 +1328,7 @@ def test_non_owner_cannot_view_unpublished_incident(
     client, db_session, user_payload
 ):
     # Register owner
-    owner_response = client.post("/users/", json=user_payload)
+    owner_response = client.post("/users", json=user_payload)
     assert owner_response.status_code == 201
 
     owner_id = owner_response.json()["user_id"]
@@ -1339,13 +1339,13 @@ def test_non_owner_cannot_view_unpublished_incident(
     other_user_payload["user_phoneno"] = "+919876543211"
 
     other_response = client.post(
-        "/users/", json=other_user_payload
+        "/users", json=other_user_payload
     )
     assert other_response.status_code == 201
 
     # Login as the other user
     login_response = client.post(
-        "/login/",
+        "/login",
         data={
             "username": other_user_payload["user_email"],
             "password": other_user_payload["user_password"],
@@ -1381,7 +1381,7 @@ def test_non_owner_cannot_view_unpublished_incident(
 def test_pagination_excludes_unpublished_incidents(
     client, db_session, user_payload
 ):
-    register_response = client.post("/users/", json=user_payload)
+    register_response = client.post("/users", json=user_payload)
     assert register_response.status_code == 201
 
     user_id = register_response.json()["user_id"]
@@ -1416,7 +1416,7 @@ def test_pagination_excludes_unpublished_incidents(
     db_session.add_all(incidents)
     db_session.commit()
 
-    response = client.get("/incidents/?limit=10&skip=0")
+    response = client.get("/incidents?limit=10&skip=0")
 
     assert response.status_code == 200
 
