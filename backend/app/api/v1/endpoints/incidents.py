@@ -6,7 +6,7 @@ from typing import Literal
 
 from fastapi import Depends, HTTPException, Query, Response, status , APIRouter
 from sqlalchemy import case
-from backend.core.oauth2 import get_current_user
+from backend.core.oauth2 import get_current_user , get_optional_current_user
 from backend.domain.incident_taxnomy import IncidentCategory, IncidentType
 from backend.models import models
 from backend.database.database import get_db , Session
@@ -28,7 +28,7 @@ def get_incidents(
     start_date : datetime = Query(default=None),
     end_date : datetime = Query(default=None),
     search: str | None = Query(default=None, min_length=1, max_length=200),
-    sort_by: Literal["newest", "oldest", "severity"] = Query(default="newest"),
+    sort_by: Literal["newest", "oldest", "severity"] = Query(default="newest")
     ):
     """Return paginated published incidents."""
 
@@ -129,34 +129,34 @@ def get_my_incidents(
 
 
 @router.get("/{incident_id}", response_model=IncidentResponse)
-def get_incident(incident_id: int , db : Session = Depends(get_db) , current_user : models.User = Depends(get_current_user)):
-    """Return a published incident by ID or raise 404 if it is unavailable."""
-
-    matched_incident = (
+def get_incident(
+    incident_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User | None = Depends(get_optional_current_user),
+):
+    incident = (
         db.query(models.Incident)
-        .filter(
-            models.Incident.incident_id == incident_id ,
-        ).first()
+        .filter(models.Incident.incident_id == incident_id)
+        .first()
     )
 
-    if matched_incident is None :
+    if incident is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Published incident {incident_id} was not found.",
+            detail="Incident not found.",
         )
 
-    is_owner = matched_incident.reported_by == current_user.user_id
-    is_admin = current_user.user_role == UserRole.ADMIN
+    is_owner = current_user is not None and incident.reported_by == current_user.user_id
+    is_admin = current_user is not None and current_user.user_role == UserRole.ADMIN
 
+    # Published incidents are public. Unpublished reports are for owners/admins.
+    if not incident.published and not (is_owner or is_admin):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to view this incident.",
+        )
 
-    if matched_incident:
-        if not matched_incident.published and not is_owner and not is_admin:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Published incident {incident_id} was not found.",
-            )
-
-    return matched_incident
+    return incident
 
 
 @router.post("",response_model=IncidentResponse,status_code=status.HTTP_201_CREATED )

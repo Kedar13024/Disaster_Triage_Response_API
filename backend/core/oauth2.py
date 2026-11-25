@@ -14,8 +14,7 @@ from backend.schemas.user_sch import UserRole
 
 settings = get_settings()
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='login')
-
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login", auto_error=False)
 
 def create_access_token(data : dict):
     """Encode token claims with an expiration using configured JWT settings."""
@@ -60,6 +59,20 @@ def get_current_user(token : str = Depends(oauth2_scheme) , db : Session = Depen
 
     return current_user
 
+# Optional auth: ignore invalid credentials on public reads only.
+def get_optional_current_user(
+    token: str | None = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
+):
+    if token is None:
+        return None
+
+    try:
+        return get_current_user(token, db)
+    except HTTPException as exc:
+        if exc.status_code == status.HTTP_401_UNAUTHORIZED:
+            return None
+        raise
 
 def require_roles(*allowed_roles : UserRole):
     """Allow an endpoint only to users with one of the listed roles."""
